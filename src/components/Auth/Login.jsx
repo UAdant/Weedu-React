@@ -77,7 +77,15 @@ export default function Login() {
                 <ErrorMessage name="username" component="div" className="text-red-500 text-sm" />
               </div>
               <div className="relative">
+                <div className='flex justify-between'>
                 <label className="block text-gray-700">Пароль</label>
+                <button
+                  onClick={() => navigate('/reset-password')}
+                  className="text-blue-500 hover:underline"
+                >
+                  Забув пароль?
+                </button>
+                </div>
                 <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
                   <AiOutlineLock className="text-gray-600 ml-3" size={20} />
                   <Field
