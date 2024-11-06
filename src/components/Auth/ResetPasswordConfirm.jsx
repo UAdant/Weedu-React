@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -8,42 +8,33 @@ export default function ResetPasswordConfirm() {
   const [isValid, setIsValid] = useState(true);  
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkTokenValidity = async () => {
-      try {
-        const response = await fetch(`http://localhost:8000/auth/reset-password-confirm/${uid}/${token}/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          setIsValid(false);  
-        }
-      } catch (error) {
-        console.error('Помилка перевірки токену:', error);
-        setIsValid(false);
-      }
-    };
-
-    checkTokenValidity();
-  }, [uid, token]);
-
   const handleResetPassword = async (values) => {
+    if (!values.password) {
+      console.error("Пароль не може бути порожнім");
+      return; // Не відправляти запит, якщо пароль порожній
+    }
+  
+    const requestBody = {
+      uibd64: uid, // Використовується uid з URL
+      token: token, // Токен отримується з URL
+      new_password: values.password, // Новий пароль
+    };
+  
+    console.log('Запит на скидання пароля:', requestBody);  // Логування даних перед відправкою
+  
     try {
       const response = await fetch(`http://localhost:8000/auth/reset-password-confirm/${uid}/${token}/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          new_password: values.password,
-        }),
+        body: JSON.stringify(requestBody),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         console.log('Помилка скидання пароля:', errorData);
+        alert('Помилка скидання пароля');
       } else {
         alert('Пароль успішно змінено!');
         navigate('/login');
