@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import { AiOutlineUser, AiOutlineMail, AiOutlineLock, AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'; // Іконки для полів
+import { AiOutlineUser, AiOutlineMail, AiOutlineLock, AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 
 const registerSchema = Yup.object().shape({
   username: Yup.string().required('Обов’язкове поле'),
   email: Yup.string().email('Неправильний формат email').required('Обов’язкове поле'),
-  password: Yup.string().min(8, 'Пароль має містити мінімум 8 символів').required('Обов’язкове поле'),
+  password: Yup.string()
+    .min(8, 'Пароль має містити мінімум 8 символів')
+    .matches(/[0-9]/, 'Пароль має містити хоча б одну цифру')
+    .matches(/[a-zA-Z]/, 'Пароль має містити хоча б одну літеру')
+    .matches(/[\W_]/, 'Пароль повинен містити хоча б один спеціальний символ.')
+    .required('Обов’язкове поле'),
   confirm_password: Yup.string()
     .oneOf([Yup.ref('password'), null], 'Паролі повинні збігатися')
     .required('Підтвердження пароля обов’язкове'),
@@ -15,8 +20,8 @@ const registerSchema = Yup.object().shape({
 
 export default function Register() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false); // Стан для видимості пароля
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Стан для видимості підтвердження пароля
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async (values, { setFieldError }) => {
     try {
