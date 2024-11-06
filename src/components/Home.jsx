@@ -9,7 +9,7 @@ export default function Home() {
   const handleProfileClick = () => {
     if (isLoggedIn) {
       logout();
-      alert('Ви вийшли з акаунту');
+      // alert('Ви вийшли з акаунту');
       navigate('/login');
     }
   };

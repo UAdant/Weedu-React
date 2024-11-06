@@ -1,33 +1,54 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
+import { AiOutlineUser, AiOutlineMail, AiOutlineLock, AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'; // Іконки для полів
 
 const registerSchema = Yup.object().shape({
-  name: Yup.string().required("Ім'я обов’язкове"),
+  username: Yup.string().required('Обов’язкове поле'),
   email: Yup.string().email('Неправильний формат email').required('Обов’язкове поле'),
-  password: Yup.string().min(6, 'Пароль має містити мінімум 6 символів').required('Обов’язкове поле'),
+  password: Yup.string().min(8, 'Пароль має містити мінімум 8 символів').required('Обов’язкове поле'),
+  confirm_password: Yup.string()
+    .oneOf([Yup.ref('password'), null], 'Паролі повинні збігатися')
+    .required('Підтвердження пароля обов’язкове'),
 });
 
 export default function Register() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false); // Стан для видимості пароля
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Стан для видимості підтвердження пароля
 
-  const handleRegister = async (values) => {
+  const handleRegister = async (values, { setFieldError }) => {
     try {
-      
-      const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+      const response = await fetch('http://localhost:8000/auth/register/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          username: values.username,
+          email: values.email,
+          password: values.password,
+          confirm_password: values.confirm_password,
+        }),
       });
-      const data = await response.json();
-      console.log('Успішна реєстрація:', data);
-      alert('Успішна реєстрація');
 
-      
-      navigate('/');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('Помилка під час реєстрації:', errorData);
+        if (errorData.errors.username) {
+          setFieldError('username', errorData.errors.username);
+        }
+        if (errorData.errors.email) {
+          setFieldError('email', errorData.errors.email);
+        }
+      } else {
+        const data = await response.json();
+        const token = data.access_token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('isLoggedIn', 'true');
+        navigate('/'); // Перенаправлення на головну сторінку
+      }
     } catch (error) {
       console.error('Помилка під час реєстрації:', error);
       alert('Помилка під час реєстрації');
@@ -35,64 +56,110 @@ export default function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md">
-      <h2 className="text-2xl font-bold mb-4 text-center">Реєстрація</h2>
-      <Formik
-        initialValues={{ name: '', email: '', password: '' }}
-        validationSchema={registerSchema}
-        onSubmit={handleRegister}
-      >
-        {({ isSubmitting }) => (
-          <Form className="space-y-4">
-            <div>
-              <label className="block text-gray-700">Ім'я</label>
-              <Field
-                type="text"
-                name="name"
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Введіть ваше ім'я"
-              />
-              <ErrorMessage name="name" component="div" className="text-red-500 text-sm" />
-            </div>
-            <div>
-              <label className="block text-gray-700">Email</label>
-              <Field
-                type="email"
-                name="email"
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Введіть ваш email"
-              />
-              <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
-            </div>
-            <div>
-              <label className="block text-gray-700">Пароль</label>
-              <Field
-                type="password"
-                name="password"
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Введіть ваш пароль"
-              />
-              <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Зачекайте...' : 'Зареєструватися'}
-            </button>
-            <div className="text-center mt-4">
-              <span>Вже є обліковий запис? </span>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
+      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg border border-gray-300">
+        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Реєстрація</h2>
+        <Formik
+          initialValues={{ username: '', email: '', password: '', confirm_password: '' }}
+          validationSchema={registerSchema}
+          onSubmit={handleRegister}
+        >
+          {({ isSubmitting }) => (
+            <Form className="space-y-6">
+              <div className="relative">
+                <label className="block text-gray-700">Ім'я користувача</label>
+                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                  <AiOutlineUser className="text-gray-600 ml-3" size={20} />
+                  <Field
+                    type="text"
+                    name="username"
+                    className="w-full p-2 pl-8 focus:outline-none"
+                    placeholder="Введіть ваше ім'я користувача"
+                  />
+                </div>
+                <ErrorMessage name="username" component="div" className="text-red-500 text-sm" />
+              </div>
+              <div className="relative">
+                <label className="block text-gray-700">Email</label>
+                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                  <AiOutlineMail className="text-gray-600 ml-3" size={20} />
+                  <Field
+                    type="email"
+                    name="email"
+                    className="w-full p-2 pl-8 focus:outline-none"
+                    placeholder="Введіть ваш email"
+                  />
+                </div>
+                <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
+              </div>
+              <div className="relative">
+                <label className="block text-gray-700">Пароль</label>
+                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                  <AiOutlineLock className="text-gray-600 ml-3" size={20} />
+                  <Field
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    className="w-full p-2 pl-8 focus:outline-none"
+                    placeholder="Введіть ваш пароль"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 mt-1 transform"
+                    onClick={() => setShowPassword(prev => !prev)}
+                  >
+                    {showPassword ? (
+                      <AiOutlineEyeInvisible className="text-gray-600" size={20} />
+                    ) : (
+                      <AiOutlineEye className="text-gray-600" size={20} />
+                    )}
+                  </button>
+                </div>
+                <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
+              </div>
+              <div className="relative">
+                <label className="block text-gray-700">Підтвердження пароля</label>
+                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                  <AiOutlineLock className="text-gray-600 ml-3" size={20} />
+                  <Field
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    name="confirm_password"
+                    className="w-full p-2 pl-8 focus:outline-none"
+                    placeholder="Повторно введіть ваш пароль"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 mt-1 transform"
+                    onClick={() => setShowConfirmPassword(prev => !prev)}
+                  >
+                    {showConfirmPassword ? (
+                      <AiOutlineEyeInvisible className="text-gray-600" size={20} />
+                    ) : (
+                      <AiOutlineEye className="text-gray-600" size={20} />
+                    )}
+                  </button>
+                </div>
+                <ErrorMessage name="confirm_password" component="div" className="text-red-500 text-sm" />
+              </div>
               <button
-                onClick={() => navigate('/login')}
-                className="text-blue-500 hover:underline"
+                type="submit"
+                className="w-full py-2 text-white rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition duration-300"
+                disabled={isSubmitting}
               >
-                Увійти
+                {isSubmitting ? 'Зачекайте...' : 'Зареєструватися'}
               </button>
-            </div>
-          </Form>
-        )}
-      </Formik>
+              <div className="text-center mt-4">
+                <span>Вже є обліковий запис? </span>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="text-blue-500 hover:underline"
+                >
+                  Увійти
+                </button>
+              </div>
+            </Form>
+          )}
+        </Formik>
+      </div>
     </div>
   );
 }
