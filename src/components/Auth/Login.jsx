@@ -34,6 +34,11 @@ export default function Login() {
         if (errorData.errors.username) {
           setFieldError('username', errorData.errors.username);
         }
+
+        // Якщо помилка у password, відображаємо її під полем
+        if (errorData.errors.password) {
+          setFieldError('password', errorData.errors.password);
+        }
       } else {
         const data = await response.json();
         const token = data.access_token;
