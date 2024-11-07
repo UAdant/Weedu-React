@@ -6,7 +6,7 @@ import Register from './components/Auth/Register';
 import Home from './components/Home';
 import ResetPassword from './components/Auth/ResetPassword'; 
 import ResetPasswordConfirm from './components/Auth/ResetPasswordConfirm';
-
+import EmailVerification from './components/Auth/EmailVerification'
 
 function App() {
   const { isLoggedIn } = useAuth();
@@ -18,6 +18,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/reset-password" element={<ResetPassword />} /> 
         <Route path="/auth/reset-password-confirm/:uid/:token" element={<ResetPasswordConfirm />} />
+        <Route path="/verify-email/:token" element={<EmailVerification />} />
         <Route
           path="/"
           element={

@@ -22,14 +22,13 @@ export default function Register() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const handleRegister = async (values, { setFieldError }) => {
     try {
       const response = await fetch('http://localhost:8000/auth/register/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: values.username,
           email: values.email,
@@ -52,7 +51,7 @@ export default function Register() {
         const token = data.access_token;
         localStorage.setItem('token', token);
         localStorage.setItem('isLoggedIn', 'true');
-        navigate('/'); // Перенаправлення на головну сторінку
+        setIsRegistered(true); // Користувач зареєстрований
       }
     } catch (error) {
       console.error('Помилка під час реєстрації:', error);
@@ -84,6 +83,7 @@ export default function Register() {
                 </div>
                 <ErrorMessage name="username" component="div" className="text-red-500 text-sm" />
               </div>
+
               <div className="relative">
                 <label className="block text-gray-700">Email</label>
                 <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
@@ -97,6 +97,7 @@ export default function Register() {
                 </div>
                 <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
               </div>
+
               <div className="relative">
                 <label className="block text-gray-700">Пароль</label>
                 <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
@@ -110,7 +111,7 @@ export default function Register() {
                   <button
                     type="button"
                     className="absolute right-3 mt-1 transform"
-                    onClick={() => setShowPassword(prev => !prev)}
+                    onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? (
                       <AiOutlineEyeInvisible className="text-gray-600" size={20} />
@@ -121,6 +122,7 @@ export default function Register() {
                 </div>
                 <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
               </div>
+
               <div className="relative">
                 <label className="block text-gray-700">Підтвердження пароля</label>
                 <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
@@ -134,7 +136,7 @@ export default function Register() {
                   <button
                     type="button"
                     className="absolute right-3 mt-1 transform"
-                    onClick={() => setShowConfirmPassword(prev => !prev)}
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
                   >
                     {showConfirmPassword ? (
                       <AiOutlineEyeInvisible className="text-gray-600" size={20} />
@@ -145,19 +147,22 @@ export default function Register() {
                 </div>
                 <ErrorMessage name="confirm_password" component="div" className="text-red-500 text-sm" />
               </div>
+
               <button
                 type="submit"
-                className="w-full py-2 text-white rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition duration-300"
-                disabled={isSubmitting}
+                className={`w-full py-2 rounded-lg transition duration-300 ${
+                  isRegistered
+                    ? 'bg-green-500 hover:bg-green-600 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+                }`}
+                disabled={isSubmitting || isRegistered}
               >
-                {isSubmitting ? 'Зачекайте...' : 'Зареєструватися'}
+                {isRegistered ? 'Підтвердьте пошту' : isSubmitting ? 'Зачекайте...' : 'Зареєструватися'}
               </button>
+
               <div className="text-center mt-4">
                 <span>Вже є обліковий запис? </span>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="text-blue-500 hover:underline"
-                >
+                <button onClick={() => navigate('/login')} className="text-blue-500 hover:underline">
                   Увійти
                 </button>
               </div>
