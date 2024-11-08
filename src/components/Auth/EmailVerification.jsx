@@ -1,74 +1,61 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { AiOutlineCheckCircle, AiOutlineCloseCircle } from 'react-icons/ai';
 
 const EmailVerification = () => {
-  const { token } = useParams(); // Отримуємо токен з URL
-  const navigate = useNavigate(); // Для навігації після активації
-
-  const [loading, setLoading] = useState(true);
+  const { token } = useParams();
+  const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!token) {
-      setError('Токен відсутній.');
-      setLoading(false);
-      return;
-    }
-
-    const activateEmail = async () => {
+    const verifyEmail = async () => {
       try {
-        const csrftoken = getCookie('csrftoken'); // Отримуємо CSRF токен з cookies
-
-        fetch(`http://localhost:8000/auth/verify-email/${token}/`, {
-            method: 'POST',
-            credentials: 'include',  // включаем передачу куки
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({token})  // если нужен токен, можно передать его тут
+        const response = await fetch(`http://localhost:8000/auth/verify-email/${token}/`, {
+          method: 'POST',
         });
 
-        if (response.ok) {
-          const data = await response.json();
+        const data = await response.json();
+
+        // Check if response contains expected fields
+        if (response.ok && data.message) {
           setMessage(data.message);
-          setLoading(false);
+        } else if (data.error) {
+          setError(data.error);
         } else {
-          const data = await response.json();
-          setError(data.error || 'Сталася помилка при активації.');
-          setLoading(false);
+          setError('Невідома помилка при підтвердженні.');
         }
       } catch (err) {
-        setError('Сталася помилка при зв\'язку з сервером.');
-        setLoading(false);
+        setError('Помилка при підтвердженні.');
       }
     };
 
-    activateEmail();
+    if (token) {
+      verifyEmail();
+    }
   }, [token]);
 
-  // Функція для отримання CSRF токену з cookies
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-  }
-
-  const handleGoHome = () => {
-    navigate('/');  // Перехід на головну сторінку після активації
-  };
-
   return (
-    <div className="email-verification">
-      {loading ? (
-        <p>Зачекайте, йде перевірка...</p>
-      ) : (
-        <div>
-          {message && <p className="success-message">{message}</p>}
-          {error && <p className="error-message">{error}</p>}
-          <button onClick={handleGoHome}>Повернутись на головну</button>
-        </div>
-      )}
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
+      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg border border-gray-300">
+        {message ? (
+          <div className="text-center">
+            <AiOutlineCheckCircle className="text-green-500 mx-auto mb-4" size={50} />
+            <p className="text-gray-700 mb-6">{message}</p>
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Перейти до входу
+            </button>
+          </div>
+        ) : (
+          <div className="text-center">
+            <AiOutlineCloseCircle className="text-red-500 mx-auto mb-4" size={50} />
+            <p className="text-gray-700 mb-6">{error || 'Зачекайте, ми перевіряємо вашу електронну пошту...'}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +23,18 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [timer, setTimer] = useState(180); // Таймер на 3 хвилини
+
+  useEffect(() => {
+    if (isRegistered && timer > 0) {
+      const countdown = setInterval(() => setTimer((prev) => prev - 1), 1000);
+      return () => clearInterval(countdown);
+    }
+
+    if (timer === 0) {
+      navigate('/login');
+    }
+  }, [isRegistered, timer, navigate]);
 
   const handleRegister = async (values, { setFieldError }) => {
     try {
@@ -39,7 +51,6 @@ export default function Register() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.log('Помилка під час реєстрації:', errorData);
         if (errorData.errors.username) {
           setFieldError('username', errorData.errors.username);
         }
@@ -47,11 +58,7 @@ export default function Register() {
           setFieldError('email', errorData.errors.email);
         }
       } else {
-        const data = await response.json();
-        const token = data.access_token;
-        localStorage.setItem('token', token);
-        localStorage.setItem('isLoggedIn', 'true');
-        setIsRegistered(true); // Користувач зареєстрований
+        setIsRegistered(true);
       }
     } catch (error) {
       console.error('Помилка під час реєстрації:', error);
@@ -62,113 +69,113 @@ export default function Register() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
       <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg border border-gray-300">
-        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Реєстрація</h2>
-        <Formik
-          initialValues={{ username: '', email: '', password: '', confirm_password: '' }}
-          validationSchema={registerSchema}
-          onSubmit={handleRegister}
-        >
-          {({ isSubmitting }) => (
-            <Form className="space-y-6">
-              <div className="relative">
-                <label className="block text-gray-700">Ім'я користувача</label>
-                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
-                  <AiOutlineUser className="text-gray-600 ml-3" size={20} />
-                  <Field
-                    type="text"
-                    name="username"
-                    className="w-full p-2 pl-8 focus:outline-none"
-                    placeholder="Введіть ваше ім'я користувача"
-                  />
+        {isRegistered ? (
+          <div className="text-center">
+            <p className="text-gray-700 mb-6">
+              На вашу пошту надіслано лист. Перейдіть за посиланням, щоб підтвердити вашу електронну адресу.
+            </p>
+            <div className="text-gray-700 font-semibold">
+              Переадресація на сторінку авторизації через {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}
+            </div>
+          </div>
+        ) : (
+          <Formik
+            initialValues={{ username: '', email: '', password: '', confirm_password: '' }}
+            validationSchema={registerSchema}
+            onSubmit={handleRegister}
+          >
+            {({ isSubmitting }) => (
+              <Form className="space-y-6">
+                <div className="relative">
+                  <label className="block text-gray-700">Ім'я користувача</label>
+                  <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                    <AiOutlineUser className="text-gray-600 ml-3" size={20} />
+                    <Field
+                      type="text"
+                      name="username"
+                      className="w-full p-2 pl-8 focus:outline-none"
+                      placeholder="Введіть ваше ім'я користувача"
+                    />
+                  </div>
+                  <ErrorMessage name="username" component="div" className="text-red-500 text-sm" />
                 </div>
-                <ErrorMessage name="username" component="div" className="text-red-500 text-sm" />
-              </div>
 
-              <div className="relative">
-                <label className="block text-gray-700">Email</label>
-                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
-                  <AiOutlineMail className="text-gray-600 ml-3" size={20} />
-                  <Field
-                    type="email"
-                    name="email"
-                    className="w-full p-2 pl-8 focus:outline-none"
-                    placeholder="Введіть ваш email"
-                  />
+                <div className="relative">
+                  <label className="block text-gray-700">Email</label>
+                  <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                    <AiOutlineMail className="text-gray-600 ml-3" size={20} />
+                    <Field
+                      type="email"
+                      name="email"
+                      className="w-full p-2 pl-8 focus:outline-none"
+                      placeholder="Введіть ваш email"
+                    />
+                  </div>
+                  <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
                 </div>
-                <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
-              </div>
 
-              <div className="relative">
-                <label className="block text-gray-700">Пароль</label>
-                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
-                  <AiOutlineLock className="text-gray-600 ml-3" size={20} />
-                  <Field
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    className="w-full p-2 pl-8 focus:outline-none"
-                    placeholder="Введіть ваш пароль"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 mt-1 transform"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? (
-                      <AiOutlineEyeInvisible className="text-gray-600" size={20} />
-                    ) : (
-                      <AiOutlineEye className="text-gray-600" size={20} />
-                    )}
-                  </button>
+                <div className="relative">
+                  <label className="block text-gray-700">Пароль</label>
+                  <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                    <AiOutlineLock className="text-gray-600 ml-3" size={20} />
+                    <Field
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      className="w-full p-2 pl-8 focus:outline-none"
+                      placeholder="Введіть ваш пароль"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 mt-1"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                    >
+                      {showPassword ? <AiOutlineEyeInvisible size={20} /> : <AiOutlineEye size={20} />}
+                    </button>
+                  </div>
+                  <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
                 </div>
-                <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
-              </div>
 
-              <div className="relative">
-                <label className="block text-gray-700">Підтвердження пароля</label>
-                <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
-                  <AiOutlineLock className="text-gray-600 ml-3" size={20} />
-                  <Field
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirm_password"
-                    className="w-full p-2 pl-8 focus:outline-none"
-                    placeholder="Повторно введіть ваш пароль"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 mt-1 transform"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  >
-                    {showConfirmPassword ? (
-                      <AiOutlineEyeInvisible className="text-gray-600" size={20} />
-                    ) : (
-                      <AiOutlineEye className="text-gray-600" size={20} />
-                    )}
-                  </button>
+                <div className="relative">
+                  <label className="block text-gray-700">Підтвердження пароля</label>
+                  <div className="flex items-center border border-gray-300 rounded focus:ring focus:ring-blue-200">
+                    <AiOutlineLock className="text-gray-600 ml-3" size={20} />
+                    <Field
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirm_password"
+                      className="w-full p-2 pl-8 focus:outline-none"
+                      placeholder="Повторно введіть ваш пароль"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 mt-1"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    >
+                      {showConfirmPassword ? <AiOutlineEyeInvisible size={20} /> : <AiOutlineEye size={20} />}
+                    </button>
+                  </div>
+                  <ErrorMessage name="confirm_password" component="div" className="text-red-500 text-sm" />
                 </div>
-                <ErrorMessage name="confirm_password" component="div" className="text-red-500 text-sm" />
-              </div>
 
-              <button
-                type="submit"
-                className={`w-full py-2 rounded-lg transition duration-300 ${
-                  isRegistered
-                    ? 'bg-green-500 hover:bg-green-600 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
-                }`}
-                disabled={isSubmitting || isRegistered}
-              >
-                {isRegistered ? 'Підтвердьте пошту' : isSubmitting ? 'Зачекайте...' : 'Зареєструватися'}
-              </button>
-
-              <div className="text-center mt-4">
-                <span>Вже є обліковий запис? </span>
-                <button onClick={() => navigate('/login')} className="text-blue-500 hover:underline">
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Зачекайте...' : 'Зареєструватися'}
+                </button>
+                <div className="text-center mt-4">
+                <span>Обліковий запис є? </span>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="text-blue-500 hover:underline"
+                >
                   Увійти
                 </button>
               </div>
-            </Form>
-          )}
-        </Formik>
+              </Form>
+            )}
+          </Formik>
+        )}
       </div>
     </div>
   );
